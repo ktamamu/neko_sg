@@ -1,0 +1,39 @@
+# Python関連
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 仮想環境
+venv/
+env/
+ENV/
+
+# IDEとエディタ関連
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# テスト関連
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ビルド関連
+build/
+dist/
+*.egg-info/
+
+# ログファイル
+*.log
+
+# 環境変数ファイル
+.env
+
+# OS関連
+.DS_Store
+Thumbs.db
+
+# プロジェクト固有のファイル
+exclusion_rules.yaml
