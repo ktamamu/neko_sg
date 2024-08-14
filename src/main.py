@@ -1,20 +1,21 @@
-import boto3
-import ipaddress
-import yaml
+"""
+AWSセキュリティグループのグローバルアクセス可能なインバウンドルールを検索し、Slackに通知するスクリプト
+"""
+
 import os
 from dotenv import load_dotenv
 from utils import (
-    get_all_regions,
-    get_security_groups,
-    is_globally_accessible,
     load_exclusion_rules,
-    is_excluded,
     find_globally_accessible_security_groups,
     format_slack_message,
     send_slack_notification
 )
 
 def main():
+    """
+    メイン処理
+    """
+
     # .envファイルを読み込む
     load_dotenv()
 
