@@ -1,26 +1,27 @@
-import boto3
-import ipaddress
-import yaml
+"""
+ユーティリティ関数
+"""
+
 import os
-import requests
 import json
-import pytest
-from unittest.mock import patch, MagicMock
+import ipaddress
+
+import requests
+import boto3
+import yaml
 
 def get_all_regions():
     """AWSの全リージョンを取得するジェネレータ"""
     ec2 = boto3.client('ec2')
     regions = [region['RegionName'] for region in ec2.describe_regions()['Regions']]
-    for region in regions:
-        yield region
+    yield from regions
 
 def get_security_groups(region):
     """指定されたリージョンのセキュリティグループを取得するジェネレータ"""
     ec2 = boto3.client('ec2', region_name=region)
     paginator = ec2.get_paginator('describe_security_groups')
     for page in paginator.paginate():
-        for sg in page['SecurityGroups']:
-            yield sg
+        yield from page['SecurityGroups']
 
 def is_globally_accessible(sg):
     """セキュリティグループがグローバルにアクセス可能かチェック"""
@@ -42,10 +43,10 @@ def load_exclusion_rules(file_path):
     if not os.path.exists(file_path):
         print(f"除外ルールファイル '{file_path}' が見つかりません。除外ルールなしで続行します。")
         return []
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', encoding='utf-8') as file:
         return yaml.safe_load(file)
 
-def is_excluded(sg, region, exclusion_rules):
+def is_excluded(sg, exclusion_rules):
     """セキュリティグループが除外ルールに該当するかチェック"""
     for rule in exclusion_rules:
         if sg['GroupId'] == rule['security_group_id']:
@@ -66,7 +67,7 @@ def send_slack_notification(webhook_url, message):
     headers = {'Content-Type': 'application/json'}
     payload = {'text': message}
     try:
-        response = requests.post(webhook_url, data=json.dumps(payload), headers=headers)
+        response = requests.post(webhook_url, data=json.dumps(payload), headers=headers, timeout=10)  # タイムアウトを追加
         response.raise_for_status()  # エラーがあれば例外を発生させる
         print("Slack通知が正常に送信されました。")
     except requests.exceptions.RequestException as e:
@@ -86,7 +87,7 @@ def find_globally_accessible_security_groups(exclusion_rules):
     found_groups = []
     for region in get_all_regions():
         for sg in get_security_groups(region):
-            if is_globally_accessible(sg) and not is_excluded(sg, region, exclusion_rules):
+            if is_globally_accessible(sg) and not is_excluded(sg, exclusion_rules):
                 group_info = {
                     'region': region,
                     'group_id': sg['GroupId'],
@@ -99,5 +100,6 @@ def find_globally_accessible_security_groups(exclusion_rules):
 
 # 使用例（utils.pyで直接テストする場合）
 if __name__ == "__main__":
-    for sg in find_globally_accessible_security_groups():
-        print(f"Region: {sg['region']}, Group ID: {sg['group_id']}, Name: {sg['group_name']}")
+    exrules = load_exclusion_rules('exclusion_rules.yaml')
+    for sgs in find_globally_accessible_security_groups(exrules):
+        print(f"Region: {sgs['region']}, Group ID: {sgs['group_id']}, Name: {sgs['group_name']}")
