@@ -3,70 +3,72 @@
 <img src="icon.png" alt="neko" width="200">
 </div>
 
-NeKo_AWS_SGは、AWSのセキュリティグループを監視し、グローバルに対して公開されているインバウンドルールを持つセキュリティグループを検出するツールです。検出結果はSlackに通知されます。
+NeKo_AWS_SG is a tool that monitors AWS security groups and detects those with inbound rules open to the global internet. The detection results are notified to Slack.
 
-## 機能
+## Functions
 
-- AWSアカウント内のすべてのセキュリティグループをスキャン（全てのセキュリティグループを取得するため、大量のAPI処理が発生する可能性があります。）
-- グローバルに対して公開されているインバウンドルールを持つセキュリティグループを検出
-- 検出結果をレポートとして出力
-- 検出結果をSlackに通知
+- Scan all security groups within the AWS account (this may result in a large number of API calls to retrieve all security groups).
+- Detect security groups with inbound rules open to the global internet.
+- Output the detection results as a report.
+- Notify the detection results to Slack.
 
-## 前提条件
+## Prerequisites
 
-- Python 3.7以上
-- AWSアクセスキーとシークレットキー
+- Python 3.9 or higher
+- AWS Access Key and Secret Key
 - Slack Webhook URL
 
-## セットアップ
+## Setup
 
-1. リポジトリをクローン：
+1. Clone the repository
    ```
    git clone https://github.com/ktamamu/NeKo_AWS_SG.git
    cd NeKo_AWS_SG
    ```
 
-2. 依存関係をインストール：
+2. Install dependencies
    ```
    pip install -r requirements.txt
    ```
 
-3. 環境変数とAWS認証情報の設定：
-   a. Slack Webhook URLの設定：
-      `.env`ファイルをプロジェクトのルートディレクトリに作成し、以下の内容を記入してください：
+3. Setting Environment Variables and AWS Credentials
 
-      ```
-      SLACK_WEBHOOK_URL=your_slack_webhook_url
-      ```
+   a. Setting Slack Webhook URL
 
-      または、環境変数を直接設定することもできます：
+   Create a .env file in the root directory of the project and include the following content:
 
-      ```
-      export SLACK_WEBHOOK_URL=your_slack_webhook_url
-      ```
+   ```
+   SLACK_WEBHOOK_URL=your_slack_webhook_url
+   ```
 
-   b. AWS認証情報の設定：
-      AWSのクレデンシャル情報は`aws configure`コマンドを使用して設定してください：
+   Alternatively, you can set the environment variables directly
 
-      ```
-      aws configure
-      ```
+   ```
+   export SLACK_WEBHOOK_URL=your_slack_webhook_url
+   ```
 
-      プロンプトに従って、AWS Access Key ID、AWS Secret Access Key、デフォルトリージョン名、出力形式を入力してください。
+   b. Setting AWS Credentials
 
-## 使用方法
+   Configure your AWS credentials using the aws configure command:
+   ```
+   aws configure
+   ```
 
-ルートディレクトリから以下のコマンドを実行：
+   Follow the prompts to enter your AWS Access Key ID, AWS Secret Access Key, default region name, and output format.
+
+## Usage
+
+Run the following command from the root directory
 
 ```
 python src/main.py
 ```
 
-実行結果は指定されたSlackチャンネルに通知されます。
+The results will be notified to the specified Slack channel.
 
-## 除外ルールの設定
+## Setting Exclusion Rules
 
-`exclusions.yaml`ファイルを編集して、特定のセキュリティグループやルールを除外できます：
+You can edit the exclusions.yaml file to exclude specific security groups or rules
 
 ```yaml
 exclusions:
@@ -79,7 +81,3 @@ exclusions:
         ip_ranges:
           - 0.0.0.0/0
 ```
-
-## ライセンス
-
-[MITライセンス](LICENSE)
