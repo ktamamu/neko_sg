@@ -14,7 +14,7 @@ NeKo_AWS_SG is a tool that monitors AWS security groups and detects those with i
 
 ## Prerequisites
 
-- Python 3.8 or higher
+- Python 3.11 or higher
 - [uv](https://docs.astral.sh/uv/) (Python package installer and resolver)
 - AWS Access Key and Secret Key
 - Slack Webhook URL

@@ -1,39 +1,115 @@
-# Python関連
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+# C extensions
 *.so
 
-# 仮想環境
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# uv
+.venv/
+uv.lock
+
+# Tool caches and configs
+
+# Traditional Python virtual environments
 venv/
 env/
 ENV/
+env.bak/
+venv.bak/
 
-# IDEとエディタ関連
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Ruff
+.ruff_cache/
+
+# Rope (Python refactoring library)
+.ropeproject/
+
+# Pylint
+.pylintrc
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# IDEs and editors
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# テスト関連
-.pytest_cache/
-.coverage
-htmlcov/
-
-# ビルド関連
-build/
-dist/
-*.egg-info/
-
-# ログファイル
-*.log
-
-# 環境変数ファイル
+# Environment variables
 .env
+.env.local
+.env.*.local
 
-# OS関連
+# Logs
+*.log
+logs/
+
+# OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-# プロジェクト固有のファイル
+# Project specific files
 exclusion_rules.yaml
+config/exclusion_rules.yaml

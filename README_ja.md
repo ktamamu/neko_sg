@@ -14,7 +14,7 @@ NeKo_AWS_SGは、AWSセキュリティグループを監視し、グローバル
 
 ## 前提条件
 
-- Python 3.8以上
+- Python 3.11以上
 - [uv](https://docs.astral.sh/uv/) (Pythonパッケージインストーラー・リゾルバー)
 - AWSアクセスキーとシークレットキー
 - Slack Webhook URL
