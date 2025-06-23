@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "neko-sg"
-version = "0.1.0"
-description = "AWSセキュリティグループのグローバルアクセス可能なインバウンドルールを検索し、Slackに通知するツール"
+version = "0.2.0"
+description = "AWS security group monitoring tool that detects globally accessible inbound rules and sends notifications to Slack"
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [{ name = "tamamu" }]
@@ -31,6 +31,10 @@ dev = [
 
 [project.scripts]
 neko-sg = "src.main:main"
+
+[project.entry-points."neko_sg.commands"]
+scan = "src.cli:scan_security_groups"
+exclude = "src.cli:add_exclusion_command"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]

@@ -75,6 +75,8 @@ NeKo_AWS_SGは、AWSセキュリティグループを監視し、グローバル
 
 ## 使用方法
 
+### 基本的なスキャン
+
 ルートディレクトリから以下のコマンドを実行してください：
 
 ```bash
@@ -83,6 +85,41 @@ uv run python src/main.py
 
 # またはエントリーポイント経由で実行
 uv run neko-sg
+
+# scanサブコマンドを明示的に使用
+uv run python src/main.py scan
+```
+
+### 除外ルールの管理
+
+`exclude`サブコマンドを使用してセキュリティグループを除外リストに追加できます：
+
+```bash
+# セキュリティグループを除外ルールに追加（自動検出あり）
+uv run python src/main.py exclude sg-1234567890abcdef0
+
+# 自動検出なしで追加
+uv run python src/main.py exclude sg-1234567890abcdef0 --no-auto-detect
+
+# エントリーポイント経由で実行
+uv run neko-sg exclude sg-1234567890abcdef0
+```
+
+`exclude`コマンドの機能：
+- 指定されたセキュリティグループを全AWSリージョンから検索
+- セキュリティグループの現在のルールを自動検出
+- `config/exclusion_rules.yaml`にセキュリティグループを追加
+- ファイルが存在しない場合は作成
+- 既に除外されている場合はスキップ
+
+### コマンドヘルプ
+
+```bash
+# 利用可能なコマンドを表示
+uv run python src/main.py --help
+
+# excludeコマンドのヘルプを表示
+uv run python src/main.py exclude --help
 ```
 
 ### 開発
@@ -107,16 +144,36 @@ uv run pytest
 
 ## 除外ルールの設定
 
-exclusions.yamlファイルを編集して、特定のセキュリティグループやルールを除外できます
+### 自動的な方法（推奨）
+
+`exclude`コマンドを使用してセキュリティグループを除外リストに自動的に追加：
+
+```bash
+uv run python src/main.py exclude sg-1234567890abcdef0
+```
+
+### 手動での方法
+
+`config/exclusion_rules.yaml`ファイルを手動で編集して、特定のセキュリティグループやルールを除外できます：
 
 ```yaml
-exclusions:
-  - group_id: sg-12345678
-    rules:
-      - ip_protocol: tcp
-        port_range:
-          from: 443
-          to: 443
-        ip_ranges:
-          - 0.0.0.0/0
+- security_group_id: sg-1234567890abcdef0
+  description: "除外: WebServer-SG (HTTP/HTTPSアクセス)"
+  rules:
+    - ip_address: "0.0.0.0/0"
+      protocol: "tcp"
+      port_range:
+        from: 443
+        to: 443
+    - ip_address: "0.0.0.0/0"
+      protocol: "tcp"
+      port_range:
+        from: 80
+        to: 80
 ```
+
+**注意**: 自動的な方法が推奨される理由：
+- 構文エラーを防止
+- 現在のセキュリティグループルールを自動検出
+- 適切なYAMLフォーマットを保証
+- ファイル構造が存在しない場合は作成

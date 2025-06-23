@@ -75,6 +75,8 @@ NeKo_AWS_SG is a tool that monitors AWS security groups and detects those with i
 
 ## Usage
 
+### Basic Scanning
+
 Run the following command from the root directory:
 
 ```bash
@@ -83,6 +85,41 @@ uv run python src/main.py
 
 # Or using the entry point
 uv run neko-sg
+
+# Explicitly use scan subcommand
+uv run python src/main.py scan
+```
+
+### Managing Exclusion Rules
+
+You can add security groups to the exclusion list using the `exclude` subcommand:
+
+```bash
+# Add a security group to exclusion rules (with auto-detection)
+uv run python src/main.py exclude sg-1234567890abcdef0
+
+# Add without auto-detection
+uv run python src/main.py exclude sg-1234567890abcdef0 --no-auto-detect
+
+# Using the entry point
+uv run neko-sg exclude sg-1234567890abcdef0
+```
+
+The `exclude` command will:
+- Search for the specified security group across all AWS regions
+- Automatically detect the security group's current rules
+- Add the security group to `config/exclusion_rules.yaml`
+- Create the file if it doesn't exist
+- Skip if the security group is already excluded
+
+### Command Help
+
+```bash
+# Show all available commands
+uv run python src/main.py --help
+
+# Show help for the exclude command
+uv run python src/main.py exclude --help
 ```
 
 ### Development
@@ -107,16 +144,36 @@ The results will be notified to the specified Slack channel.
 
 ## Setting Exclusion Rules
 
-You can edit the exclusions.yaml file to exclude specific security groups or rules
+### Automatic Method (Recommended)
+
+Use the `exclude` command to automatically add security groups to the exclusion list:
+
+```bash
+uv run python src/main.py exclude sg-1234567890abcdef0
+```
+
+### Manual Method
+
+You can manually edit the `config/exclusion_rules.yaml` file to exclude specific security groups or rules:
 
 ```yaml
-exclusions:
-  - group_id: sg-12345678
-    rules:
-      - ip_protocol: tcp
-        port_range:
-          from: 443
-          to: 443
-        ip_ranges:
-          - 0.0.0.0/0
+- security_group_id: sg-1234567890abcdef0
+  description: "Excluded: WebServer-SG (HTTP/HTTPS access)"
+  rules:
+    - ip_address: "0.0.0.0/0"
+      protocol: "tcp"
+      port_range:
+        from: 443
+        to: 443
+    - ip_address: "0.0.0.0/0"
+      protocol: "tcp"
+      port_range:
+        from: 80
+        to: 80
 ```
+
+**Note**: The automatic method is recommended as it:
+- Prevents syntax errors
+- Automatically detects current security group rules
+- Ensures proper YAML formatting
+- Creates the file structure if it doesn't exist

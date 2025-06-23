@@ -4,9 +4,11 @@ AWSセキュリティグループのグローバルアクセス可能なイン�
 
 import logging
 import os
+import sys
 
 from dotenv import load_dotenv
 
+from cli import parse_args
 from config import Config
 from utils import (
     find_globally_accessible_security_groups,
@@ -16,18 +18,9 @@ from utils import (
 )
 
 
-def main() -> None:
+def scan_security_groups() -> None:
     """
-    AWSセキュリティグループのグローバルアクセス可能なインバウンドルールを検索し、Slackに通知するメイン処理
-
-    環境変数:
-        SLACK_WEBHOOK_URL: Slack Webhook URL（オプション）
-        EXCLUSION_RULES_FILE: 除外ルールファイルのパス（デフォルト: ../config/exclusion_rules.yaml）
-        LOG_LEVEL: ログレベル（デフォルト: INFO）
-        AWS_TIMEOUT: AWS APIタイムアウト（秒、デフォルト: 10）
-
-    Raises:
-        Exception: AWS APIエラー、ファイル読み込みエラーなど
+    セキュリティグループをスキャンしてグローバルアクセス可能なルールを検出
     """
     # .envファイルを読み込む
     load_dotenv()
@@ -70,6 +63,30 @@ def main() -> None:
     except Exception as e:
         logger.error("実行中にエラーが発生しました: %s", e)
         raise
+
+
+def main() -> None:
+    """
+    メイン関数 - CLIサブコマンドを処理
+
+    環境変数:
+        SLACK_WEBHOOK_URL: Slack Webhook URL（オプション）
+        EXCLUSION_RULES_FILE: 除外ルールファイルのパス（デフォルト: ../config/exclusion_rules.yaml）
+        LOG_LEVEL: ログレベル（デフォルト: INFO）
+        AWS_TIMEOUT: AWS APIタイムアウト（秒、デフォルト: 10）
+
+    Raises:
+        Exception: AWS APIエラー、ファイル読み込みエラーなど
+    """
+    args = parse_args()
+
+    # サブコマンドが指定されていない場合、またはscanの場合はスキャンを実行
+    if not args.command or args.command == "scan":
+        scan_security_groups()
+    else:
+        # サブコマンドの処理を実行
+        result = args.func(args)
+        sys.exit(result)
 
 
 def _send_slack_notification_if_configured(
