@@ -14,24 +14,34 @@ NeKo_AWS_SG is a tool that monitors AWS security groups and detects those with i
 
 ## Prerequisites
 
-- Python 3.9 or higher
+- Python 3.8 or higher
+- [uv](https://docs.astral.sh/uv/) (Python package installer and resolver)
 - AWS Access Key and Secret Key
 - Slack Webhook URL
 
 ## Setup
 
 1. Clone the repository
-   ```
-   git clone https://github.com/ktamamu/NeKo_AWS_SG.git
-   cd NeKo_AWS_SG
-   ```
-
-2. Install dependencies
-   ```
-   pip install -r requirements.txt
+   ```bash
+   git clone https://github.com/ktamamu/neko_sg.git
+   cd　neko_sg
    ```
 
-3. Setting Environment Variables and AWS Credentials
+2. Install uv (if not already installed)
+   ```bash
+   # On macOS and Linux
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+
+   # On Windows
+   powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+   ```
+
+3. Install dependencies using uv
+   ```bash
+   uv sync
+   ```
+
+4. Setting Environment Variables and AWS Credentials
 
    a. Setting Slack Webhook URL
 
@@ -58,10 +68,32 @@ NeKo_AWS_SG is a tool that monitors AWS security groups and detects those with i
 
 ## Usage
 
-Run the following command from the root directory
+Run the following command from the root directory:
 
+```bash
+# Using uv to run the script
+uv run python src/main.py
+
+# Or using the entry point
+uv run neko-sg
 ```
-python src/main.py
+
+### Development
+
+For development, you can install the optional development dependencies:
+
+```bash
+# Install with dev dependencies
+uv sync --extra dev
+
+# Run linting
+uv run ruff check src/
+
+# Run type checking
+uv run mypy src/
+
+# Run tests
+uv run pytest
 ```
 
 The results will be notified to the specified Slack channel.
