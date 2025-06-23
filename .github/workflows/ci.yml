@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+      
+      - name: Install the project
+        run: uv sync --all-extras
+      
+      - name: Run ruff linting
+        run: uv run ruff check src/
+      
+      - name: Run ruff formatting check
+        run: uv run ruff format --check src/
+      
+      - name: Run type checking with mypy
+        run: uv run mypy src/
+      
+      - name: Run tests with pytest
+        run: uv run pytest tests/ --cov=src --cov-report=xml --cov-report=term-missing
+        continue-on-error: true  # テストファイルがまだない場合
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        if: matrix.python-version == '3.11'
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
