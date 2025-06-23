@@ -4,6 +4,7 @@ CLIサブコマンド関連の機能
 
 import argparse
 import os
+from typing import Any
 
 import yaml
 
@@ -11,9 +12,9 @@ from config import Config
 from utils import get_all_regions, get_security_groups
 
 
-def create_exclusion_rule_entry(sg_id: str, sg_info: dict = None) -> dict:
+def create_exclusion_rule_entry(sg_id: str, sg_info: dict[str, Any] | None = None) -> dict[str, Any]:
     """除外ルールのエントリを作成"""
-    entry = {
+    entry: dict[str, Any] = {
         "security_group_id": sg_id,
         "description": f"Excluded security group: {sg_id}",
         "rules": [],
@@ -42,7 +43,7 @@ def create_exclusion_rule_entry(sg_id: str, sg_info: dict = None) -> dict:
     return entry
 
 
-def find_security_group(sg_id: str) -> dict | None:
+def find_security_group(sg_id: str) -> dict[str, Any] | None:
     """指定されたセキュリティグループIDを全リージョンから検索"""
     print(f"セキュリティグループ {sg_id} を検索中...")
 
@@ -58,7 +59,7 @@ def find_security_group(sg_id: str) -> dict | None:
     return None
 
 
-def load_or_create_exclusion_rules(file_path: str) -> list:
+def load_or_create_exclusion_rules(file_path: str) -> list[dict[str, Any]]:
     """除外ルールファイルを読み込み、存在しない場合は空リストを返す"""
     if os.path.exists(file_path):
         try:
@@ -77,7 +78,7 @@ def load_or_create_exclusion_rules(file_path: str) -> list:
         return []
 
 
-def save_exclusion_rules(file_path: str, rules: list) -> bool:
+def save_exclusion_rules(file_path: str, rules: list[dict[str, Any]]) -> bool:
     """除外ルールファイルを保存"""
     try:
         with open(file_path, "w", encoding="utf-8") as file:
@@ -133,7 +134,7 @@ def add_exclusion_command(sg_id: str, auto_detect: bool = True) -> int:
         return 1
 
 
-def setup_exclude_parser(subparsers):
+def setup_exclude_parser(subparsers: argparse._SubParsersAction) -> None:
     """exclude サブコマンドのパーサーを設定"""
     exclude_parser = subparsers.add_parser(
         "exclude",
@@ -171,7 +172,7 @@ def create_main_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def parse_args(args=None):
+def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     """コマンドライン引数を解析"""
     parser = create_main_parser()
     return parser.parse_args(args)
