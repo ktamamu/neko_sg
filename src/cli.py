@@ -12,7 +12,9 @@ from config import Config
 from utils import get_all_regions, get_security_groups
 
 
-def create_exclusion_rule_entry(sg_id: str, sg_info: dict[str, Any] | None = None) -> dict[str, Any]:
+def create_exclusion_rule_entry(
+    sg_id: str, sg_info: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """除外ルールのエントリを作成"""
     entry: dict[str, Any] = {
         "security_group_id": sg_id,
