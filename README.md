@@ -1,4 +1,4 @@
-# NeKo_AWS_SG (<u>Ne</u>twork <u>K</u>it <u>o</u>f AWS Security Group)
+# neko_sg
 
 [![CI](https://github.com/ktamamu/neko_sg/actions/workflows/ci.yml/badge.svg)](https://github.com/ktamamu/neko_sg/actions/workflows/ci.yml)
 [![Security](https://github.com/ktamamu/neko_sg/actions/workflows/security.yml/badge.svg)](https://github.com/ktamamu/neko_sg/actions/workflows/security.yml)
