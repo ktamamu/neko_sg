@@ -3,70 +3,104 @@
 <img src="icon.png" alt="neko" width="200">
 </div>
 
-NeKo_AWS_SGは、AWSのセキュリティグループを監視し、グローバルに対して公開されているインバウンドルールを持つセキュリティグループを検出するツールです。検出結果はSlackに通知されます。
+NeKo_AWS_SGは、AWSセキュリティグループを監視し、グローバルインターネットに開放されたインバウンドルールを持つものを検出するツールです。検出結果はSlackに通知されます。
 
 ## 機能
 
-- AWSアカウント内のすべてのセキュリティグループをスキャン（全てのセキュリティグループを取得するため、大量のAPI処理が発生する可能性があります。）
-- グローバルに対して公開されているインバウンドルールを持つセキュリティグループを検出
+- AWSアカウント内のすべてのセキュリティグループをスキャン（すべてのセキュリティグループを取得するため、大量のAPI呼び出しが発生する可能性があります）
+- グローバルインターネットに開放されたインバウンドルールを持つセキュリティグループを検出
 - 検出結果をレポートとして出力
 - 検出結果をSlackに通知
 
 ## 前提条件
 
-- Python 3.9以上
+- Python 3.8以上
+- [uv](https://docs.astral.sh/uv/) (Pythonパッケージインストーラー・リゾルバー)
 - AWSアクセスキーとシークレットキー
 - Slack Webhook URL
 
 ## セットアップ
 
-1. リポジトリをクローン：
-   ```
-   git clone https://github.com/ktamamu/NeKo_AWS_SG.git
-   cd NeKo_AWS_SG
-   ```
-
-2. 依存関係をインストール：
-   ```
-   pip install -r requirements.txt
+1. リポジトリをクローン
+   ```bash
+   git clone https://github.com/ktamamu/neko_sg.git
+   cd　neko_sg
    ```
 
-3. 環境変数とAWS認証情報の設定：
-   a. Slack Webhook URLの設定：
-      `.env`ファイルをプロジェクトのルートディレクトリに作成し、以下の内容を記入してください：
+2. uv をインストール（まだインストールしていない場合）
+   ```bash
+   # macOS と Linux の場合
+   curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      ```
-      SLACK_WEBHOOK_URL=your_slack_webhook_url
-      ```
+   # Windows の場合
+   powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+   ```
 
-      または、環境変数を直接設定することもできます：
+3. uv を使用して依存関係をインストール
+   ```bash
+   uv sync
+   ```
 
-      ```
-      export SLACK_WEBHOOK_URL=your_slack_webhook_url
-      ```
+4. 環境変数とAWS認証情報の設定
 
-   b. AWS認証情報の設定：
-      AWSのクレデンシャル情報は`aws configure`コマンドを使用して設定してください：
+   a. Slack Webhook URLの設定
 
-      ```
-      aws configure
-      ```
+   プロジェクトのルートディレクトリに .env ファイルを作成し、以下の内容を含めてください：
 
-      プロンプトに従って、AWS Access Key ID、AWS Secret Access Key、デフォルトリージョン名、出力形式を入力してください。
+   ```
+   SLACK_WEBHOOK_URL=your_slack_webhook_url
+   ```
+
+   または、環境変数を直接設定することもできます
+
+   ```
+   export SLACK_WEBHOOK_URL=your_slack_webhook_url
+   ```
+
+   b. AWS認証情報の設定
+
+   aws configure コマンドを使用してAWS認証情報を設定してください：
+   ```
+   aws configure
+   ```
+
+   プロンプトに従って、AWSアクセスキーID、AWSシークレットアクセスキー、デフォルトリージョン名、出力形式を入力してください。
 
 ## 使用方法
 
-ルートディレクトリから以下のコマンドを実行：
+ルートディレクトリから以下のコマンドを実行してください：
 
-```
-python src/main.py
+```bash
+# uv を使用してスクリプトを実行
+uv run python src/main.py
+
+# またはエントリーポイント経由で実行
+uv run neko-sg
 ```
 
-実行結果は指定されたSlackチャンネルに通知されます。
+### 開発
+
+開発時は、オプションの開発依存関係をインストールできます：
+
+```bash
+# 開発依存関係込みでインストール
+uv sync --extra dev
+
+# リンティング実行
+uv run ruff check src/
+
+# 型チェック実行
+uv run mypy src/
+
+# テスト実行
+uv run pytest
+```
+
+結果は指定されたSlackチャンネルに通知されます。
 
 ## 除外ルールの設定
 
-`exclusions.yaml`ファイルを編集して、特定のセキュリティグループやルールを除外できます：
+exclusions.yamlファイルを編集して、特定のセキュリティグループやルールを除外できます
 
 ```yaml
 exclusions:
