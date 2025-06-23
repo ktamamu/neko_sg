@@ -4,13 +4,11 @@ CLIサブコマンド関連の機能
 
 import argparse
 import os
-import sys
-from pathlib import Path
 
 import yaml
 
 from config import Config
-from utils import get_security_groups, get_all_regions
+from utils import get_all_regions, get_security_groups
 
 
 def create_exclusion_rule_entry(sg_id: str, sg_info: dict = None) -> dict:
@@ -64,7 +62,7 @@ def load_or_create_exclusion_rules(file_path: str) -> list:
     """除外ルールファイルを読み込み、存在しない場合は空リストを返す"""
     if os.path.exists(file_path):
         try:
-            with open(file_path, "r", encoding="utf-8") as file:
+            with open(file_path, encoding="utf-8") as file:
                 content = yaml.safe_load(file)
                 return content if content is not None else []
         except yaml.YAMLError as e:
