@@ -18,24 +18,24 @@ class Config:
     """
 
     slack_webhook_url: str | None = None
-    exclusion_rules_file: str = '../config/exclusion_rules.yaml'
-    log_level: str = 'INFO'
+    exclusion_rules_file: str = "../config/exclusion_rules.yaml"
+    log_level: str = "INFO"
     aws_timeout: int = 10
 
     @classmethod
-    def from_env(cls) -> 'Config':
+    def from_env(cls) -> "Config":
         """環境変数から設定を読み込む
 
         Returns:
             Config: 環境変数から読み込んだ設定オブジェクト
         """
         return cls(
-            slack_webhook_url=os.getenv('SLACK_WEBHOOK_URL'),
+            slack_webhook_url=os.getenv("SLACK_WEBHOOK_URL"),
             exclusion_rules_file=os.getenv(
-                'EXCLUSION_RULES_FILE', '../config/exclusion_rules.yaml'
+                "EXCLUSION_RULES_FILE", "../config/exclusion_rules.yaml"
             ),
-            log_level=os.getenv('LOG_LEVEL', 'INFO'),
-            aws_timeout=int(os.getenv('AWS_TIMEOUT', '10'))
+            log_level=os.getenv("LOG_LEVEL", "INFO"),
+            aws_timeout=int(os.getenv("AWS_TIMEOUT", "10")),
         )
 
     def get_exclusion_rules_path(self, script_dir: str) -> str:

@@ -38,7 +38,7 @@ def main() -> None:
     # ロガーの設定
     logging.basicConfig(
         level=getattr(logging, config.log_level.upper()),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
     logger = logging.getLogger(__name__)
 
@@ -55,9 +55,14 @@ def main() -> None:
         if not found_groups:
             logger.info("グローバルにアクセス可能なセキュリティグループは見つかりませんでした。")
         else:
-            logger.info("検索完了。%d個のセキュリティグループにグローバルなインバウンドルールが見つかりました。", len(found_groups))
+            logger.info(
+                "検索完了。%d個のセキュリティグループにグローバルなインバウンドルールが見つかりました。",
+                len(found_groups),
+            )
             for sg in found_groups:
-                logger.info("リージョン: %s, セキュリティグループID: %s", sg['region'], sg['group_id'])
+                logger.info(
+                    "リージョン: %s, セキュリティグループID: %s", sg["region"], sg["group_id"]
+                )
 
             # Slack通知の処理
             _send_slack_notification_if_configured(config, found_groups)
@@ -66,7 +71,10 @@ def main() -> None:
         logger.error("実行中にエラーが発生しました: %s", e)
         raise
 
-def _send_slack_notification_if_configured(config: Config, found_groups: list[dict[str, str]]) -> None:
+
+def _send_slack_notification_if_configured(
+    config: Config, found_groups: list[dict[str, str]]
+) -> None:
     """設定されている場合のみSlack通知を送信する内部関数
 
     Args:
@@ -85,9 +93,9 @@ def _send_slack_notification_if_configured(config: Config, found_groups: list[di
             logger.warning("Slack通知の送信に失敗しました。")
     else:
         logger.warning(
-            "SLACK_WEBHOOK_URL環境変数が設定されていないため、"
-            "Slack通知は送信されません。"
+            "SLACK_WEBHOOK_URL環境変数が設定されていないため、Slack通知は送信されません。"
         )
+
 
 if __name__ == "__main__":
     main()
