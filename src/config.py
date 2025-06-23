@@ -4,7 +4,6 @@
 
 import os
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -18,7 +17,7 @@ class Config:
         aws_timeout: AWS API呼び出しのタイムアウト（秒）
     """
 
-    slack_webhook_url: Optional[str] = None
+    slack_webhook_url: str | None = None
     exclusion_rules_file: str = '../config/exclusion_rules.yaml'
     log_level: str = 'INFO'
     aws_timeout: int = 10

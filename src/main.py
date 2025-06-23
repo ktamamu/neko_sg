@@ -4,7 +4,6 @@ AWSセキュリティグループのグローバルアクセス可能なイン�
 
 import logging
 import os
-from typing import Dict, List
 
 from dotenv import load_dotenv
 
@@ -67,7 +66,7 @@ def main() -> None:
         logger.error("実行中にエラーが発生しました: %s", e)
         raise
 
-def _send_slack_notification_if_configured(config: Config, found_groups: List[Dict[str, str]]) -> None:
+def _send_slack_notification_if_configured(config: Config, found_groups: list[dict[str, str]]) -> None:
     """設定されている場合のみSlack通知を送信する内部関数
 
     Args:

@@ -9,7 +9,7 @@ description = "AWSセキュリティグループのグローバルアクセス�
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [{ name = "tamamu" }]
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 dependencies = [
     "requests>=2.28.0",
     "boto3>=1.24.0",
@@ -36,7 +36,7 @@ neko-sg = "src.main:main"
 packages = ["src"]
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py311"
 line-length = 100
 
 [tool.ruff.lint]

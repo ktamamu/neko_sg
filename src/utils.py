@@ -6,7 +6,8 @@ import ipaddress
 import json
 import logging
 import os
-from typing import Any, Dict, Generator, List
+from collections.abc import Generator
+from typing import Any
 
 import boto3
 import requests
@@ -35,7 +36,7 @@ def get_all_regions() -> Generator[str, None, None]:
         logger.error("リージョン取得エラー: %s", e)
         raise
 
-def get_security_groups(region: str) -> Generator[Dict[str, Any], None, None]:
+def get_security_groups(region: str) -> Generator[dict[str, Any], None, None]:
     """指定されたリージョンのセキュリティグループを取得するジェネレータ
 
     Args:
@@ -58,7 +59,7 @@ def get_security_groups(region: str) -> Generator[Dict[str, Any], None, None]:
         return
         yield  # unreachable, but makes the type checker happy
 
-def is_globally_accessible(sg: Dict[str, Any]) -> bool:
+def is_globally_accessible(sg: dict[str, Any]) -> bool:
     """セキュリティグループがグローバルにアクセス可能かチェック
 
     Args:
@@ -90,14 +91,14 @@ def _is_global_cidr(cidr: str) -> bool:
         logger.warning("無効なCIDR形式: %s", cidr)
         return False
 
-def load_exclusion_rules(file_path: str) -> List[Dict[str, Any]]:
+def load_exclusion_rules(file_path: str) -> list[dict[str, Any]]:
     """YAMLファイルから除外ルールを読み込む
 
     Args:
         file_path: 除外ルールYAMLファイルのパス
 
     Returns:
-        List[Dict[str, Any]]: 除外ルールのリスト。ファイルが存在しない場合は空リスト
+        list[dict[str, Any]]: 除外ルールのリスト。ファイルが存在しない場合は空リスト
 
     Note:
         ファイルが見つからない場合やYAML解析エラーの場合は空リストを返す
@@ -117,7 +118,7 @@ def load_exclusion_rules(file_path: str) -> List[Dict[str, Any]]:
         logger.error("ファイル '%s' の読み込みエラー: %s", file_path, e)
         return []
 
-def is_excluded(sg: Dict[str, Any], exclusion_rules: List[Dict[str, Any]]) -> bool:
+def is_excluded(sg: dict[str, Any], exclusion_rules: list[dict[str, Any]]) -> bool:
     """セキュリティグループが除外ルールに該当するかチェック
 
     Args:
@@ -138,7 +139,7 @@ def is_excluded(sg: Dict[str, Any], exclusion_rules: List[Dict[str, Any]]) -> bo
                 return True
     return False
 
-def _permission_matches_exclusion_rules(permission: Dict[str, Any], excluded_rules: List[Dict[str, Any]]) -> bool:
+def _permission_matches_exclusion_rules(permission: dict[str, Any], excluded_rules: list[dict[str, Any]]) -> bool:
     """パーミッションが除外ルールにマッチするかチェックする内部関数
 
     Args:
@@ -158,7 +159,7 @@ def _permission_matches_exclusion_rules(permission: Dict[str, Any], excluded_rul
                 return True
     return False
 
-def _matches_excluded_rule(permission: Dict[str, Any], cidr: str, excluded_rule: Dict[str, Any]) -> bool:
+def _matches_excluded_rule(permission: dict[str, Any], cidr: str, excluded_rule: dict[str, Any]) -> bool:
     """個別の除外ルールとマッチするかチェックする内部関数
 
     Args:
@@ -211,7 +212,7 @@ def send_slack_notification(webhook_url: str, message: str) -> bool:
         logger.error("Slack通知の送信中にエラーが発生しました: %s", e)
         return False
 
-def format_slack_message(security_groups: List[Dict[str, str]]) -> str:
+def format_slack_message(security_groups: list[dict[str, str]]) -> str:
     """セキュリティグループの情報をSlack通知用にフォーマットする関数
 
     Args:
@@ -228,14 +229,14 @@ def format_slack_message(security_groups: List[Dict[str, str]]) -> str:
         message += f"• リージョン: {sg['region']}, セキュリティグループID: {sg['group_id']}, 名前: {sg['group_name']}\n"
     return message
 
-def find_globally_accessible_security_groups(exclusion_rules: List[Dict[str, Any]]) -> Generator[Dict[str, str], None, None]:
+def find_globally_accessible_security_groups(exclusion_rules: list[dict[str, Any]]) -> Generator[dict[str, str], None, None]:
     """全リージョンでグローバルにアクセス可能なセキュリティグループを見つけるジェネレータ（除外ルール適用）
 
     Args:
         exclusion_rules: 除外ルールのリスト
 
     Yields:
-        Dict[str, str]: グローバルアクセス可能なセキュリティグループの情報
+        dict[str, str]: グローバルアクセス可能なセキュリティグループの情報
             - region: リージョン名
             - group_id: セキュリティグループID
             - group_name: セキュリティグループ名
