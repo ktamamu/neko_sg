@@ -14,6 +14,14 @@ import requests
 import yaml
 from botocore.exceptions import BotoCoreError, ClientError
 
+try:
+    from slack_sdk import WebClient
+    from slack_sdk.errors import SlackApiError
+
+    SLACK_SDK_AVAILABLE = True
+except ImportError:
+    SLACK_SDK_AVAILABLE = False
+
 # ロガーの設定
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -201,7 +209,7 @@ def _matches_excluded_rule(
 
 
 def send_slack_notification(webhook_url: str, message: str) -> bool:
-    """Slackに通知を送信する関数
+    """Slackに通知を送信する関数（Incoming Webhook使用）
 
     Args:
         webhook_url: Slack WebhookのURL
@@ -222,6 +230,49 @@ def send_slack_notification(webhook_url: str, message: str) -> bool:
         logger.info("Slack通知が正常に送信されました。")
         return True
     except requests.exceptions.RequestException as e:
+        logger.error("Slack通知の送信中にエラーが発生しました: %s", e)
+        return False
+
+
+def send_slack_notification_sdk(bot_token: str, channel: str, message: str) -> bool:
+    """Slack SDKを使用してSlackに通知を送信する関数
+
+    Args:
+        bot_token: Slack Bot Token
+        channel: 送信先チャンネル名（#付きまたはチャンネルID）
+        message: 送信するメッセージ
+
+    Returns:
+        bool: 送信成功時はTrue、失敗時はFalse
+
+    Note:
+        slack-sdkが利用できない場合はFalseを返す
+    """
+    if not SLACK_SDK_AVAILABLE:
+        logger.error(
+            "slack-sdk が利用できません。pip install slack-sdk でインストールしてください。"
+        )
+        return False
+
+    try:
+        client = WebClient(token=bot_token)
+        response = client.chat_postMessage(
+            channel=channel, text=message, username="NeKo_AWS_SG", icon_emoji=":warning:"
+        )
+
+        if response["ok"]:
+            logger.info("Slack通知が正常に送信されました（SDK使用）。")
+            return True
+        else:
+            logger.error(
+                "Slack通知の送信に失敗しました: %s", response.get("error", "Unknown error")
+            )
+            return False
+
+    except SlackApiError as e:
+        logger.error("Slack API エラー: %s", e.response["error"])
+        return False
+    except Exception as e:
         logger.error("Slack通知の送信中にエラーが発生しました: %s", e)
         return False
 

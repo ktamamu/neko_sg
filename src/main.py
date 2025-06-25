@@ -15,6 +15,7 @@ from utils import (
     format_slack_message,
     load_exclusion_rules,
     send_slack_notification,
+    send_slack_notification_sdk,
 )
 
 
@@ -99,18 +100,38 @@ def _send_slack_notification_if_configured(
         found_groups: 発見されたグローバルアクセス可能なセキュリティグループのリスト
 
     Note:
-        SLACK_WEBHOOK_URLが設定されていない場合は警告メッセージをログ出力
+        Slack SDK使用フラグが有効な場合はSlack SDKを使用し、
+        それ以外の場合は従来のIncoming Webhookを使用する
     """
     logger = logging.getLogger(__name__)
 
-    if config.slack_webhook_url:
-        message = format_slack_message(found_groups)
+    message = format_slack_message(found_groups)
+    success = False
+
+    # Slack SDK使用が有効で、必要な設定が揃っている場合
+    if config.use_slack_sdk and config.slack_bot_token:
+        logger.info("Slack SDK を使用して通知を送信します。")
+        success = send_slack_notification_sdk(config.slack_bot_token, config.slack_channel, message)
+        if not success:
+            logger.warning("Slack SDK による通知送信に失敗しました。")
+
+    # Slack SDKが失敗した場合や使用しない場合、Webhookにフォールバック
+    if not success and config.slack_webhook_url:
+        logger.info("Incoming Webhook を使用して通知を送信します。")
         success = send_slack_notification(config.slack_webhook_url, message)
         if not success:
-            logger.warning("Slack通知の送信に失敗しました。")
-    else:
+            logger.warning("Incoming Webhook による通知送信に失敗しました。")
+
+    # 両方とも設定されていない場合
+    if (
+        not success
+        and not config.slack_webhook_url
+        and not (config.use_slack_sdk and config.slack_bot_token)
+    ):
         logger.warning(
-            "SLACK_WEBHOOK_URL環境変数が設定されていないため、Slack通知は送信されません。"
+            "Slack通知の設定がされていません。以下のいずれかを設定してください:\n"
+            "  - SLACK_WEBHOOK_URL (Incoming Webhook使用)\n"
+            "  - SLACK_BOT_TOKEN + USE_SLACK_SDK=true (Slack SDK使用)"
         )
 
 

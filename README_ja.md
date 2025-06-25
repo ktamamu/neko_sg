@@ -14,7 +14,7 @@ NeKo_AWS_SGは、AWSセキュリティグループを監視し、グローバル
 
 ## 機能
 
-- AWSアカウント内のすべてのセキュリティグループをスキャン（すべてのセキュリティグループを取得するため、大量のAPI呼び出しが発生する可能性があります）
+- AWSアカウント内のすべてのセキュリティグループをスキャン
 - グローバルインターネットに開放されたインバウンドルールを持つセキュリティグループを検出
 - 検出結果をレポートとして出力
 - 検出結果をSlackに通知
@@ -24,7 +24,9 @@ NeKo_AWS_SGは、AWSセキュリティグループを監視し、グローバル
 - Python 3.11以上
 - [uv](https://docs.astral.sh/uv/) (Pythonパッケージインストーラー・リゾルバー)
 - AWSアクセスキーとシークレットキー
-- Slack Webhook URL
+- Slack通知設定（以下のいずれか）:
+  - Slack Webhook URL（従来の方法）
+  - Slack Bot Token（推奨、Slack SDK使用）
 
 ## セットアップ
 
@@ -50,24 +52,34 @@ NeKo_AWS_SGは、AWSセキュリティグループを監視し、グローバル
 
 4. 環境変数とAWS認証情報の設定
 
-   a. Slack Webhook URLの設定
+   a. Slack通知の設定
+
+   **オプション1: Slack Bot Token（推奨）**
+
+   Slackアプリを作成してBot Tokenを取得し、以下の環境変数を設定してください：
+
+   ```bash
+   # .env ファイルまたは環境変数
+   SLACK_BOT_TOKEN=xoxb-your-bot-token
+   SLACK_CHANNEL=#alerts
+   USE_SLACK_SDK=true
+   ```
+
+   **オプション2: Slack Webhook URL（従来の方法）**
 
    プロジェクトのルートディレクトリに .env ファイルを作成し、以下の内容を含めてください：
 
-   ```
-   SLACK_WEBHOOK_URL=your_slack_webhook_url
+   ```bash
+   # .env ファイルまたは環境変数
+   SLACK_WEBHOOK_URL=https://hooks.slack.com/services/your/webhook/url
    ```
 
-   または、環境変数を直接設定することもできます
-
-   ```
-   export SLACK_WEBHOOK_URL=your_slack_webhook_url
-   ```
+   **注意**: 両方の方法が設定されている場合、Bot Token方式が優先され、失敗時にWebhook URLに自動フォールバックします。
 
    b. AWS認証情報の設定
 
    aws configure コマンドを使用してAWS認証情報を設定してください：
-   ```
+   ```bash
    aws configure
    ```
 
@@ -177,3 +189,50 @@ uv run python src/main.py exclude sg-1234567890abcdef0
 - 現在のセキュリティグループルールを自動検出
 - 適切なYAMLフォーマットを保証
 - ファイル構造が存在しない場合は作成
+
+## Slack通知方法
+
+### Slack Bot Token（推奨）
+
+Slack SDK方式の利点：
+- より良いエラーハンドリングとリトライロジック
+- より柔軟なメッセージフォーマットオプション
+- レート制限保護
+- 細かい権限設定による強化されたセキュリティ
+
+**設定手順：**
+1. https://api.slack.com/apps でSlackアプリを作成
+2. OAuth & Permissions で以下のBot Token Scopesを追加：
+   - `chat:write` - ボットとしてメッセージを送信
+   - `chat:write.public` - パブリックチャンネルにメッセージを送信（推奨）
+   - `chat:write.customize` - カスタムユーザー名とアイコンを使用（オプション）
+3. アプリをワークスペースにインストール
+4. Bot Token（`xoxb-`で始まる）をコピー
+5. 環境変数を設定：
+   ```bash
+   SLACK_BOT_TOKEN=xoxb-your-bot-token
+   SLACK_CHANNEL=#your-channel
+   USE_SLACK_SDK=true
+   ```
+
+### Slack Webhook URL（従来の方法）
+
+従来のIncoming Webhook方式：
+- シンプルなセットアッププロセス
+- 既存のWebhook設定との互換性
+- 以前のバージョンとの後方互換性
+
+**設定手順：**
+1. SlackでIncoming Webhookを作成
+2. Webhook URLをコピー
+3. 環境変数を設定：
+   ```bash
+   SLACK_WEBHOOK_URL=https://hooks.slack.com/services/your/webhook/url
+   ```
+
+### 自動フォールバック
+
+ツールは自動フォールバック機能をサポート：
+1. Slack SDKが有効で設定されている場合、まずそれが使用されます
+2. Slack SDKが失敗または設定されていない場合、Webhook URLにフォールバックします
+3. どちらも設定されていない場合、警告メッセージが表示されます
