@@ -4,6 +4,7 @@
 
 import os
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -59,3 +60,16 @@ class Config:
         if os.path.isabs(self.exclusion_rules_file):
             return self.exclusion_rules_file
         return os.path.join(script_dir, self.exclusion_rules_file)
+
+    def get_aws_config(self) -> Any:
+        """boto3クライアント用の設定（タイムアウト等）を取得
+
+        Returns:
+            botocore.config.Config: boto3用の設定オブジェクト
+        """
+        from botocore.config import Config as BotoConfig
+
+        return BotoConfig(
+            connect_timeout=self.aws_timeout,
+            read_timeout=self.aws_timeout,
+        )

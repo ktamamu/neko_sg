@@ -8,9 +8,9 @@ import sys
 
 from dotenv import load_dotenv
 
-from cli import parse_args
-from config import Config
-from utils import (
+from src.cli import parse_args
+from src.config import Config
+from src.utils import (
     find_globally_accessible_security_groups,
     format_slack_message,
     load_exclusion_rules,
@@ -44,7 +44,7 @@ def scan_security_groups() -> None:
         exclusion_rules = load_exclusion_rules(exclusion_rules_file)
 
         logger.info("グローバルにアクセス可能なセキュリティグループを検索中...")
-        found_groups = list(find_globally_accessible_security_groups(exclusion_rules))
+        found_groups = list(find_globally_accessible_security_groups(exclusion_rules, config))
 
         if not found_groups:
             logger.info("グローバルにアクセス可能なセキュリティグループは見つかりませんでした。")

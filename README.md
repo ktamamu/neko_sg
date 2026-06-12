@@ -15,7 +15,8 @@ NeKo_AWS_SG is a tool that monitors AWS security groups and detects those with i
 ## Functions
 
 - Scan all security groups within the AWS account.
-- Detect security groups with inbound rules open to the global internet.
+- Detect security groups with inbound rules open to the global internet (supports both **IPv4** and **IPv6**).
+- Parallel scanning across AWS regions using multi-threading for high performance.
 - Output the detection results as a report.
 - Notify the detection results to Slack.
 

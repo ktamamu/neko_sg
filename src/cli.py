@@ -8,8 +8,8 @@ from typing import Any
 
 import yaml
 
-from config import Config
-from utils import get_all_regions, get_security_groups
+from src.config import Config
+from src.utils import get_all_regions, get_security_groups
 
 
 def create_exclusion_rule_entry(
@@ -29,11 +29,25 @@ def create_exclusion_rule_entry(
 
         # セキュリティグループのルールを除外ルールとして追加
         for permission in sg_info.get("IpPermissions", []):
+            # IPv4ルール
             for ip_range in permission.get("IpRanges", []):
                 cidr = ip_range.get("CidrIp")
                 if cidr:
                     rule = {
                         "ip_address": cidr,
+                        "protocol": permission.get("IpProtocol", "tcp"),
+                        "port_range": {
+                            "from": permission.get("FromPort", 0),
+                            "to": permission.get("ToPort", 0),
+                        },
+                    }
+                    entry["rules"].append(rule)
+            # IPv6ルール
+            for ipv6_range in permission.get("Ipv6Ranges", []):
+                cidr_ipv6 = ipv6_range.get("CidrIpv6")
+                if cidr_ipv6:
+                    rule = {
+                        "ip_address": cidr_ipv6,
                         "protocol": permission.get("IpProtocol", "tcp"),
                         "port_range": {
                             "from": permission.get("FromPort", 0),
@@ -47,15 +61,34 @@ def create_exclusion_rule_entry(
 
 def find_security_group(sg_id: str) -> dict[str, Any] | None:
     """指定されたセキュリティグループIDを全リージョンから検索"""
-    print(f"セキュリティグループ {sg_id} を検索中...")
+    from concurrent.futures import ThreadPoolExecutor, as_completed
 
-    for region in get_all_regions():
-        print(f"  リージョン {region} を検索中...")
-        for sg in get_security_groups(region):
-            if sg["GroupId"] == sg_id:
-                print(f"  見つかりました: {region}")
-                sg["Region"] = region  # リージョン情報を追加
-                return sg
+    print(f"セキュリティグループ {sg_id} を全リージョンから並列検索中...")
+
+    config = Config.from_env()
+    try:
+        regions = list(get_all_regions(config))
+    except Exception as e:
+        print(f"エラー: リージョン一覧の取得に失敗しました: {e}")
+        return None
+
+    def check_region(region: str) -> dict[str, Any] | None:
+        try:
+            for sg in get_security_groups(region, config):
+                if sg["GroupId"] == sg_id:
+                    sg["Region"] = region  # リージョン情報を追加
+                    return sg
+        except Exception:
+            pass
+        return None
+
+    with ThreadPoolExecutor(max_workers=min(len(regions), 10) if regions else 1) as executor:
+        futures = {executor.submit(check_region, r): r for r in regions}
+        for future in as_completed(futures):
+            result = future.result()
+            if result:
+                print(f"  見つかりました: {result['Region']}")
+                return result
 
     print(f"  セキュリティグループ {sg_id} が見つかりませんでした")
     return None

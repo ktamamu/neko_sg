@@ -27,8 +27,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def get_all_regions() -> Generator[str, None, None]:
+def get_all_regions(config: Any | None = None) -> Generator[str, None, None]:
     """AWSの全リージョンを取得するジェネレータ
+
+    Args:
+        config: アプリケーション設定
 
     Yields:
         str: AWSリージョン名
@@ -38,7 +41,15 @@ def get_all_regions() -> Generator[str, None, None]:
         ClientError: AWSクライアントエラー
     """
     try:
-        ec2 = boto3.client("ec2")
+        aws_config = None
+        if config is not None:
+            aws_config = config.get_aws_config()
+        elif os.getenv("AWS_TIMEOUT"):
+            from src.config import Config
+
+            aws_config = Config.from_env().get_aws_config()
+
+        ec2 = boto3.client("ec2", config=aws_config)
         regions = [region["RegionName"] for region in ec2.describe_regions()["Regions"]]
         yield from regions
     except (BotoCoreError, ClientError) as e:
@@ -46,11 +57,14 @@ def get_all_regions() -> Generator[str, None, None]:
         raise
 
 
-def get_security_groups(region: str) -> Generator[dict[str, Any], None, None]:
+def get_security_groups(
+    region: str, config: Any | None = None
+) -> Generator[dict[str, Any], None, None]:
     """指定されたリージョンのセキュリティグループを取得するジェネレータ
 
     Args:
         region: AWSリージョン名
+        config: アプリケーション設定
 
     Yields:
         Dict[str, Any]: セキュリティグループの詳細情報
@@ -59,7 +73,15 @@ def get_security_groups(region: str) -> Generator[dict[str, Any], None, None]:
         エラーが発生した場合は空のジェネレータを返す
     """
     try:
-        ec2 = boto3.client("ec2", region_name=region)
+        aws_config = None
+        if config is not None:
+            aws_config = config.get_aws_config()
+        elif os.getenv("AWS_TIMEOUT"):
+            from src.config import Config
+
+            aws_config = Config.from_env().get_aws_config()
+
+        ec2 = boto3.client("ec2", region_name=region, config=aws_config)
         paginator = ec2.get_paginator("describe_security_groups")
         for page in paginator.paginate():
             yield from page["SecurityGroups"]
@@ -80,9 +102,15 @@ def is_globally_accessible(sg: dict[str, Any]) -> bool:
         bool: グローバルにアクセス可能な場合True
     """
     for permission in sg.get("IpPermissions", []):
+        # IPv4のCIDRをチェック
         for ip_range in permission.get("IpRanges", []):
             cidr = ip_range.get("CidrIp")
             if cidr and _is_global_cidr(cidr):
+                return True
+        # IPv6のCIDRをチェック
+        for ipv6_range in permission.get("Ipv6Ranges", []):
+            cidr_ipv6 = ipv6_range.get("CidrIpv6")
+            if cidr_ipv6 and _is_global_cidr(cidr_ipv6):
                 return True
     return False
 
@@ -168,6 +196,7 @@ def _permission_matches_exclusion_rules(
     Returns:
         bool: 除外ルールにマッチする場合True
     """
+    # IPv4 CIDRのチェック
     for ip_range in permission.get("IpRanges", []):
         cidr = ip_range.get("CidrIp")
         if not cidr:
@@ -176,6 +205,17 @@ def _permission_matches_exclusion_rules(
         for excluded_rule in excluded_rules:
             if _matches_excluded_rule(permission, cidr, excluded_rule):
                 return True
+
+    # IPv6 CIDRのチェック
+    for ipv6_range in permission.get("Ipv6Ranges", []):
+        cidr_ipv6 = ipv6_range.get("CidrIpv6")
+        if not cidr_ipv6:
+            continue
+
+        for excluded_rule in excluded_rules:
+            if _matches_excluded_rule(permission, cidr_ipv6, excluded_rule):
+                return True
+
     return False
 
 
@@ -297,11 +337,13 @@ def format_slack_message(security_groups: list[dict[str, str]]) -> str:
 
 def find_globally_accessible_security_groups(
     exclusion_rules: list[dict[str, Any]],
+    config: Any | None = None,
 ) -> Generator[dict[str, str], None, None]:
     """全リージョンでグローバルにアクセス可能なセキュリティグループを見つけるジェネレータ（除外ルール適用）
 
     Args:
         exclusion_rules: 除外ルールのリスト
+        config: アプリケーション設定
 
     Yields:
         dict[str, str]: グローバルアクセス可能なセキュリティグループの情報
@@ -310,17 +352,39 @@ def find_globally_accessible_security_groups(
             - group_name: セキュリティグループ名
             - description: セキュリティグループの説明
     """
-    for region in get_all_regions():
+    from concurrent.futures import ThreadPoolExecutor
+
+    try:
+        regions = list(get_all_regions(config))
+    except Exception as e:
+        logger.error("リージョン一覧の取得に失敗しました: %s", e)
+        return
+
+    def scan_region(region: str) -> list[dict[str, str]]:
         logger.info("リージョン %s を検索中...", region)
-        for sg in get_security_groups(region):
+        found = []
+        for sg in get_security_groups(region, config):
             if is_globally_accessible(sg) and not is_excluded(sg, exclusion_rules):
                 group_info = {
                     "region": region,
                     "group_id": sg["GroupId"],
                     "group_name": sg["GroupName"],
-                    "description": sg["Description"],
+                    "description": sg.get("Description", ""),
                 }
                 logger.info(
                     "グローバルアクセス可能なSG発見: %s in %s", group_info["group_id"], region
                 )
-                yield group_info
+                found.append(group_info)
+        return found
+
+    # ThreadPoolExecutorを使用してリージョンごとのスキャンを並列化
+    max_workers = min(len(regions), 10) if regions else 1
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(scan_region, region): region for region in regions}
+        for future in futures:
+            region = futures[future]
+            try:
+                results = future.result()
+                yield from results
+            except Exception as e:
+                logger.error("リージョン %s のスキャン中にエラーが発生しました: %s", region, e)
