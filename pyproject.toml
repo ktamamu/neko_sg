@@ -15,7 +15,7 @@ dependencies = [
     "boto3>=1.43.23",
     "PyYAML>=6.0",
     "python-dotenv>=1.2.2",
-    "slack-sdk>=3.27.0",
+    "slack-sdk>=3.42.0",
 ]
 
 [project.optional-dependencies]
