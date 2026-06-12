@@ -13,6 +13,7 @@ from src.utils import (
     get_all_regions,
     get_security_groups,
     find_globally_accessible_security_groups,
+    has_unexcluded_global_access,
 )
 from src.config import Config
 
@@ -198,31 +199,36 @@ def test_send_slack_notification_sdk(mock_web_client):
     mock_client_instance.chat_postMessage.return_value = {"ok": False, "error": "invalid_auth"}
     assert not send_slack_notification_sdk("token", "#channel", "message")
 
-@mock.patch("boto3.client")
-def test_get_all_regions(mock_boto_client):
+@mock.patch("boto3.session.Session")
+def test_get_all_regions(mock_session_class):
+    mock_session = mock.Mock()
     mock_ec2 = mock.Mock()
     mock_ec2.describe_regions.return_value = {
         "Regions": [{"RegionName": "us-east-1"}, {"RegionName": "us-west-2"}]
     }
-    mock_boto_client.return_value = mock_ec2
+    mock_session.client.return_value = mock_ec2
+    mock_session_class.return_value = mock_session
 
     regions = list(get_all_regions())
     assert regions == ["us-east-1", "us-west-2"]
-    mock_boto_client.assert_called_with("ec2", config=None)
+    mock_session.client.assert_called_with("ec2", config=None)
 
-@mock.patch("boto3.client")
-def test_get_security_groups(mock_boto_client):
+@mock.patch("boto3.session.Session")
+def test_get_security_groups(mock_session_class):
+    mock_session = mock.Mock()
     mock_ec2 = mock.Mock()
     mock_paginator = mock.Mock()
     mock_paginator.paginate.return_value = [
         {"SecurityGroups": [{"GroupId": "sg-1"}, {"GroupId": "sg-2"}]}
     ]
     mock_ec2.get_paginator.return_value = mock_paginator
-    mock_boto_client.return_value = mock_ec2
+    mock_session.client.return_value = mock_ec2
+    mock_session_class.return_value = mock_session
 
     groups = list(get_security_groups("us-east-1"))
     assert len(groups) == 2
     assert groups[0]["GroupId"] == "sg-1"
+    mock_session.client.assert_called_with("ec2", region_name="us-east-1", config=None)
 
 @mock.patch("src.utils.get_all_regions")
 @mock.patch("src.utils.get_security_groups")
@@ -252,3 +258,68 @@ def test_find_globally_accessible_security_groups(mock_get_groups, mock_get_regi
     assert len(results) == 1
     assert results[0]["group_id"] == "sg-1"
     assert results[0]["region"] == "us-east-1"
+
+def test_has_unexcluded_global_access():
+    # 1. 除外ルールなし、グローバルアクセスあり -> True
+    sg_global = {
+        "GroupId": "sg-123",
+        "IpPermissions": [
+            {
+                "IpProtocol": "tcp",
+                "FromPort": 80,
+                "ToPort": 80,
+                "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                "Ipv6Ranges": []
+            }
+        ]
+    }
+    assert has_unexcluded_global_access(sg_global, [])
+
+    # 2. 除外ルールにマッチするルールのみ -> False
+    rules = [
+        {
+            "security_group_id": "sg-123",
+            "rules": [
+                {
+                    "ip_address": "0.0.0.0/0",
+                    "protocol": "tcp",
+                    "port_range": {"from": 80, "to": 80}
+                }
+            ]
+        }
+    ]
+    assert not has_unexcluded_global_access(sg_global, rules)
+
+    # 3. 複数のグローバルルールがあり、一部のみ除外 -> True
+    sg_mixed = {
+        "GroupId": "sg-123",
+        "IpPermissions": [
+            {
+                "IpProtocol": "tcp",
+                "FromPort": 80,
+                "ToPort": 80,
+                "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                "Ipv6Ranges": []
+            },
+            {
+                "IpProtocol": "tcp",
+                "FromPort": 22,
+                "ToPort": 22,
+                "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                "Ipv6Ranges": []
+            }
+        ]
+    }
+    rules_ssh_only = [
+        {
+            "security_group_id": "sg-123",
+            "rules": [
+                {
+                    "ip_address": "0.0.0.0/0",
+                    "protocol": "tcp",
+                    "port_range": {"from": 22, "to": 22}
+                }
+            ]
+        }
+    ]
+    assert has_unexcluded_global_access(sg_mixed, rules_ssh_only)

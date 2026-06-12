@@ -49,7 +49,8 @@ def get_all_regions(config: Any | None = None) -> Generator[str, None, None]:
 
             aws_config = Config.from_env().get_aws_config()
 
-        ec2 = boto3.client("ec2", config=aws_config)
+        session = boto3.session.Session()
+        ec2 = session.client("ec2", config=aws_config)
         regions = [region["RegionName"] for region in ec2.describe_regions()["Regions"]]
         yield from regions
     except (BotoCoreError, ClientError) as e:
@@ -81,7 +82,8 @@ def get_security_groups(
 
             aws_config = Config.from_env().get_aws_config()
 
-        ec2 = boto3.client("ec2", region_name=region, config=aws_config)
+        session = boto3.session.Session()
+        ec2 = session.client("ec2", region_name=region, config=aws_config)
         paginator = ec2.get_paginator("describe_security_groups")
         for page in paginator.paginate():
             yield from page["SecurityGroups"]
@@ -335,6 +337,56 @@ def format_slack_message(security_groups: list[dict[str, str]]) -> str:
     return message
 
 
+def has_unexcluded_global_access(
+    sg: dict[str, Any], exclusion_rules: list[dict[str, Any]]
+) -> bool:
+    """セキュリティグループ内に、除外されていないグローバルアクセス可能なルールがあるか判定
+
+    Args:
+        sg: セキュリティグループの詳細情報
+        exclusion_rules: 除外ルールのリスト
+
+    Returns:
+        bool: 除外されていないグローバルアクセス可能なルールがある場合True
+    """
+    sg_id = sg["GroupId"]
+
+    # 該当するSGの除外ルールを取得
+    sg_rules = []
+    for rule in exclusion_rules:
+        if rule.get("security_group_id") == sg_id:
+            sg_rules.extend(rule.get("rules", []))
+
+    for permission in sg.get("IpPermissions", []):
+        # IPv4のチェック
+        for ip_range in permission.get("IpRanges", []):
+            cidr = ip_range.get("CidrIp")
+            if cidr and _is_global_cidr(cidr):
+                # このCIDRが除外ルールにマッチするかチェック
+                excluded = False
+                for excluded_rule in sg_rules:
+                    if _matches_excluded_rule(permission, cidr, excluded_rule):
+                        excluded = True
+                        break
+                if not excluded:
+                    return True
+
+        # IPv6のチェック
+        for ipv6_range in permission.get("Ipv6Ranges", []):
+            cidr_ipv6 = ipv6_range.get("CidrIpv6")
+            if cidr_ipv6 and _is_global_cidr(cidr_ipv6):
+                # このCIDRが除外ルールにマッチするかチェック
+                excluded = False
+                for excluded_rule in sg_rules:
+                    if _matches_excluded_rule(permission, cidr_ipv6, excluded_rule):
+                        excluded = True
+                        break
+                if not excluded:
+                    return True
+
+    return False
+
+
 def find_globally_accessible_security_groups(
     exclusion_rules: list[dict[str, Any]],
     config: Any | None = None,
@@ -364,7 +416,7 @@ def find_globally_accessible_security_groups(
         logger.info("リージョン %s を検索中...", region)
         found = []
         for sg in get_security_groups(region, config):
-            if is_globally_accessible(sg) and not is_excluded(sg, exclusion_rules):
+            if has_unexcluded_global_access(sg, exclusion_rules):
                 group_info = {
                     "region": region,
                     "group_id": sg["GroupId"],
