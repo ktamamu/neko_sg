@@ -11,7 +11,7 @@ license = { file = "LICENSE" }
 authors = [{ name = "tamamu" }]
 requires-python = ">=3.11"
 dependencies = [
-    "requests>=2.33.0",
+    "requests>=2.34.2",
     "boto3>=1.43.23",
     "PyYAML>=6.0",
     "python-dotenv>=1.2.2",
