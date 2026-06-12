@@ -374,7 +374,7 @@ requires-dist = [
     { name = "requests", specifier = ">=2.33.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
     { name = "slack-sdk", specifier = ">=3.27.0" },
-    { name = "types-boto3", marker = "extra == 'dev'", specifier = ">=1.0.0" },
+    { name = "types-boto3", marker = "extra == 'dev'", specifier = ">=1.43.23" },
     { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0.0" },
     { name = "types-requests", marker = "extra == 'dev'", specifier = ">=2.28.0" },
 ]
@@ -654,16 +654,16 @@ wheels = [
 
 [[package]]
 name = "types-boto3"
-version = "1.42.49"
+version = "1.43.23"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "botocore-stubs" },
     { name = "types-s3transfer" },
     { name = "typing-extensions", marker = "python_full_version < '3.12'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/83/f5/58dd0192a7ff60cf303539971aeafa73c4e4a92ac33688452562fa4a234b/types_boto3-1.42.49.tar.gz", hash = "sha256:9b6438f2aef6aa0ec791f30341a1b46cd3df395c2a42d4d7c95308ee92b49434", size = 101266, upload-time = "2026-02-13T21:07:34.56Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/30/b6/0ea1bffe722c6fb1b66d4d1791670460cb86dd6a1b8406ecf68833dd4fad/types_boto3-1.43.23.tar.gz", hash = "sha256:59cecf63f62d27c138950ce1b3bf025e1f7c4675ad10ddcc8615ddea4f237207", size = 103361, upload-time = "2026-06-04T21:04:58.931Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ef/c9/9a3732522bfe632561f65c88dd8aa8d00e5c17a9a8154a654b5749378f6e/types_boto3-1.42.49-py3-none-any.whl", hash = "sha256:76b65b995897898d43402c53a7988ed4065e3cf095c8d92130fa268572d18bc4", size = 69673, upload-time = "2026-02-13T21:07:30.421Z" },
+    { url = "https://files.pythonhosted.org/packages/61/78/3e8535aa2233f4b71f2dc9e9e6c23372f60bb477e076d2e18558f7a4de99/types_boto3-1.43.23-py3-none-any.whl", hash = "sha256:6991242c4a857ddd01db8638daaa0ae166ebe745513191dbcdf59a6211c2440a", size = 70748, upload-time = "2026-06-04T21:04:55.782Z" },
 ]
 
 [[package]]
