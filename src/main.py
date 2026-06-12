@@ -128,11 +128,8 @@ def _send_slack_notification_if_configured(
         and not config.slack_webhook_url
         and not (config.use_slack_sdk and config.slack_bot_token)
     ):
-        logger.warning(
-            "Slack通知の設定がされていません。以下のいずれかを設定してください:\n"
-            "  - SLACK_WEBHOOK_URL (Incoming Webhook使用)\n"
-            "  - SLACK_BOT_TOKEN + USE_SLACK_SDK=true (Slack SDK使用)"
-        )
+        logger.info("Slack通知の設定がされていないため、結果を標準出力に出力します:")
+        print(message)
 
 
 if __name__ == "__main__":

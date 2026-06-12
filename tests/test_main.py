@@ -91,8 +91,10 @@ def test_send_slack_notification_if_configured(mock_format, mock_send_webhook, m
     mock_send_sdk.reset_mock()
     mock_send_webhook.reset_mock()
 
-    # 3. None configured
+    # 3. None configured (should print to stdout)
     config_empty = Config()
-    _send_slack_notification_if_configured(config_empty, [])
-    mock_send_sdk.assert_not_called()
-    mock_send_webhook.assert_not_called()
+    with mock.patch("builtins.print") as mock_print:
+        _send_slack_notification_if_configured(config_empty, [])
+        mock_send_sdk.assert_not_called()
+        mock_send_webhook.assert_not_called()
+        mock_print.assert_called_once_with("formatted")
