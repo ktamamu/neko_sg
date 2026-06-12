@@ -237,3 +237,51 @@ Slack SDK方式の利点：
 1. Slack SDKが有効で設定されている場合、まずそれが使用されます
 2. Slack SDKが失敗または設定されていない場合、Webhook URLにフォールバックします
 3. どちらも設定されていない場合、警告メッセージが表示されます
+
+## GitHub Actionsでの定期実行
+
+GitHub Actionsのワークフローを使用して、この監視ツールを定期的に実行することができます。
+以下は、毎日午前9時（日本時間）に実行し、OIDCを使用してAWS認証を行うサンプルワークフローです：
+
+```yaml
+name: AWS Security Group Monitor
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # 毎日 UTC 00:00 (JST 09:00) に実行
+  workflow_dispatch: # 手動実行を許可
+
+permissions:
+  id-token: write # AWS OIDC認証に必要
+  contents: read
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/YourGithubActionsRole
+          aws-region: ap-northeast-1
+
+      - name: Run Scan
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          # またはSlack SDKを使用する場合：
+          # SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          # SLACK_CHANNEL: "#alerts"
+          # USE_SLACK_SDK: "true"
+        run: uv run neko-sg
+```
+

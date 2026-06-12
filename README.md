@@ -237,3 +237,50 @@ The tool supports automatic fallback:
 1. If Slack SDK is enabled and configured, it will be used first
 2. If Slack SDK fails or is not configured, it will fallback to Webhook URL
 3. If neither is configured, a warning message will be displayed
+
+## GitHub Actions Integration
+
+You can easily run this tool on a schedule using GitHub Actions. Below is an example workflow that runs daily and authenticates with AWS using OIDC (recommended) or static credentials.
+
+```yaml
+name: AWS Security Group Monitor
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs every day at 00:00 UTC
+  workflow_dispatch: # Allows manual triggering
+
+permissions:
+  id-token: write # Required for AWS OIDC authentication
+  contents: read
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/YourGithubActionsRole
+          aws-region: ap-northeast-1
+
+      - name: Run Scan
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          # Or if using Slack SDK:
+          # SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          # SLACK_CHANNEL: "#alerts"
+          # USE_SLACK_SDK: "true"
+        run: uv run neko-sg
+```
+
