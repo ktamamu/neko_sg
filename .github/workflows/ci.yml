@@ -42,7 +42,7 @@ jobs:
         continue-on-error: true  # テストファイルがまだない場合
       
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6.0.1
         if: matrix.python-version == '3.11'
         with:
           file: ./coverage.xml
