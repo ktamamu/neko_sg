@@ -337,9 +337,7 @@ def format_slack_message(security_groups: list[dict[str, str]]) -> str:
     return message
 
 
-def has_unexcluded_global_access(
-    sg: dict[str, Any], exclusion_rules: list[dict[str, Any]]
-) -> bool:
+def has_unexcluded_global_access(sg: dict[str, Any], exclusion_rules: list[dict[str, Any]]) -> bool:
     """セキュリティグループ内に、除外されていないグローバルアクセス可能なルールがあるか判定
 
     Args:
