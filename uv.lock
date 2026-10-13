@@ -440,7 +440,7 @@ requires-dist = [
     { name = "requests", specifier = ">=2.34.2" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.15.16" },
     { name = "slack-sdk", specifier = ">=3.42.0" },
-    { name = "types-boto3", marker = "extra == 'dev'", specifier = ">=1.43.23" },
+    { name = "types-boto3", marker = "extra == 'dev'", specifier = ">=1.43.39" },
     { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0.0" },
     { name = "types-requests", marker = "extra == 'dev'", specifier = ">=2.33.0.20260518" },
 ]
@@ -720,16 +720,16 @@ wheels = [
 
 [[package]]
 name = "types-boto3"
-version = "1.43.23"
+version = "1.43.39"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "botocore-stubs" },
     { name = "types-s3transfer" },
     { name = "typing-extensions", marker = "python_full_version < '3.12'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/30/b6/0ea1bffe722c6fb1b66d4d1791670460cb86dd6a1b8406ecf68833dd4fad/types_boto3-1.43.23.tar.gz", hash = "sha256:59cecf63f62d27c138950ce1b3bf025e1f7c4675ad10ddcc8615ddea4f237207", size = 103361, upload-time = "2026-06-04T21:04:58.931Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/51/ad/95fb6b294d19f927b00a099ec334de9b3c119f7533c3a2fa4b385535ac63/types_boto3-1.43.39.tar.gz", hash = "sha256:6f4695b9bc92dccd26fe7d78fa9cffb8d4567c82fe9e38bee77b11169201ce1c", size = 103143, upload-time = "2026-07-01T20:17:26.624Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/61/78/3e8535aa2233f4b71f2dc9e9e6c23372f60bb477e076d2e18558f7a4de99/types_boto3-1.43.23-py3-none-any.whl", hash = "sha256:6991242c4a857ddd01db8638daaa0ae166ebe745513191dbcdf59a6211c2440a", size = 70748, upload-time = "2026-06-04T21:04:55.782Z" },
+    { url = "https://files.pythonhosted.org/packages/07/d8/edeba413de6afe538debf2c7352888a4e31eb1f39ef8f272465ee38665f1/types_boto3-1.43.39-py3-none-any.whl", hash = "sha256:e91fbd463d2f2338a76be579ffb76d4fa597808a0b734f54288f432b4a3c2340", size = 70671, upload-time = "2026-07-01T20:17:23.832Z" },
 ]
 
 [[package]]
