@@ -12,7 +12,7 @@ authors = [{ name = "tamamu" }]
 requires-python = ">=3.11"
 dependencies = [
     "requests>=2.34.2",
-    "boto3>=1.43.23",
+    "boto3>=1.43.39",
     "PyYAML>=6.0",
     "python-dotenv>=1.2.2",
     "slack-sdk>=3.42.0",
